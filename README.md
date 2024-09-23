@@ -5,4 +5,6 @@
 - Create a `.env` file in the project root with your PayPal API credentials:
 ```bash
 ROBLOX_MACHINE_ID=your-roblox-machine-id
+MAX_CONCURRENT=1
+MIN_TIME=1000
 ```
