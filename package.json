@@ -1,0 +1,28 @@
+{
+    "name": "roblox-api-request",
+    "version": "1.0.0",
+    "description": "A simple Node.js application for making HTTP/HTTPS requests to the Roblox API with a custom roblox-machine-id header.",
+    "main": "index.js",
+    "scripts": {
+      "start": "node index.js"
+    },
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/notcamslice/roblox-api-request.git"
+    },
+    "keywords": [
+      "nodejs",
+      "roblox",
+      "api",
+      "http-request",
+      "https",
+      "custom-header"
+    ],
+    "author": "notcamslice",
+    "license": "MIT",
+    "dependencies": {
+      "axios": "^1.4.0",
+      "dotenv": "^16.1.0"
+    }
+  }
+  
