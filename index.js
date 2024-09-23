@@ -1,6 +1,7 @@
 const axios = require('axios');
 const Bottleneck = require('bottleneck');
 require('dotenv').config(); // To load environment variables
+let cachedMachineId = process.env.ROBLOX_MACHINE_ID;
 
 function validateEnvVariables() {
     if (!process.env.ROBLOX_MACHINE_ID) {
@@ -50,7 +51,19 @@ async function makeRequest(url, method = 'GET', data = null) {
         config.data = data;
     }
 
-    return limiter.schedule(() => axios(config));
+    try {
+        const response = await limiter.schedule(() => axios(config));
+
+        if (response.headers['roblox-machine-id'] && !cachedMachineId) {
+            cachedMachineId = response.headers['roblox-machine-id'];
+            console.log('New Machine ID cached:', cachedMachineId)
+        }
+
+        return response;
+    } catch(error) {
+        console.error('Error making request:', error);
+        throw error;
+    }
 }
 
 (async () => {
