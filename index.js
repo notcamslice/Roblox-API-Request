@@ -41,8 +41,8 @@ async function makeRequest(url, method = 'GET', data = null) {
             'roblox-machine-id': robloxMachineId
         },
         proxy: url.include('roblox') ? false : {
-            host: 'your-proxy-host',
-            port: 'your-proxy-port'
+            host: process.env.PROXY_HOST,
+            port: process.env.PROXY_PORT
         },
         timeout: 5000
     };
