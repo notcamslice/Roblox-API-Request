@@ -1,20 +1,25 @@
 const axios = require('axios');
 const Bottleneck = require('bottleneck');
-require('dotenv').config(); // To load environment variables
+require('dotenv').config();
 let cachedMachineId = process.env.ROBLOX_MACHINE_ID;
 
+function getEnvVariable(varName, defaultValue = null) {
+    const value = process.env[varName];
+    if (!value && defaultValue === null) {
+        throw new Error(`${varName} is not set in the environment variables.`);
+    }
+    return value || defaultValue;
+}
+
 function validateEnvVariables() {
-    if (!process.env.ROBLOX_MACHINE_ID) {
-        throw new Error("ROBLOX_MACHINE_ID is not set in the environment variables.");
-    }
-    if (!process.env.MAX_CONCURRENT || !process.env.MIN_TIME) {
-        throw new Error("MAX_CONCURRENT or MIN_TIME is not set in the environment variables.");
-    }
+    getEnvVariable('ROBLOX_MACHINE_ID');
+    getEnvVariable('MAX_CONCURRENT');
+    getEnvVariable('MIN_TIME');
 }
 
 const limiter = new Bottleneck({
-    maxConcurrent: parseInt(process.env.MAX_CONCURRENT, 10),
-    minTime: parseInt(process.env.MIN_TIME, 10)
+    maxConcurrent: parseInt(getEnvVariable('MAX_CONCURRENT', '1'), 10),
+    minTime: parseInt(getEnvVariable('MIN_TIME', '1000'), 10)
 });
 
 function handleError(error) {
@@ -32,17 +37,20 @@ function handleError(error) {
 // Function to make a request with a custom roblox-machine-id
 async function makeRequest(url, method = 'GET', data = null) {
     validateEnvVariables();
-    const robloxMachineId = process.env.ROBLOX_MACHINE_ID; // Fetch from environment variables
 
+    // Use cached machine ID if available, otherwise fetch from environment
+    const robloxMachineId = cachedMachineId || process.env.ROBLOX_MACHINE_ID;
+
+    // Proxy configuration (optional, based on the environment or URL)
     const config = {
         method: method,
         url: url,
         headers: {
             'roblox-machine-id': robloxMachineId
         },
-        proxy: url.include('roblox') ? false : {
-            host: process.env.PROXY_HOST,
-            port: process.env.PROXY_PORT
+        proxy: url.includes('roblox') ? false : {
+            host: getEnvVariable('PROXY_HOST'),
+            port: getEnvVariable('PROXY_PORT')
         },
         timeout: 5000
     };
