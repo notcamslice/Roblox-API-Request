@@ -15,6 +15,8 @@ function validateEnvVariables() {
     getEnvVariable('ROBLOX_MACHINE_ID');
     getEnvVariable('MAX_CONCURRENT');
     getEnvVariable('MIN_TIME');
+    getEnvVariable('PROXY_HOST', '');
+    getEnvVariable('PROXY_PORT', '');
 }
 
 const limiter = new Bottleneck({
@@ -36,40 +38,43 @@ function handleError(error) {
 
 // Function to make a request with a custom roblox-machine-id
 async function makeRequest(url, method = 'GET', data = null) {
-    validateEnvVariables();
+    try {
+        validateEnvVariables();
 
-    // Use cached machine ID if available, otherwise fetch from environment
-    const robloxMachineId = cachedMachineId || process.env.ROBLOX_MACHINE_ID;
+        // Use cached machine ID if available, otherwise fetch from environment
+        const robloxMachineId = cachedMachineId || process.env.ROBLOX_MACHINE_ID;
 
-    // Proxy configuration (optional, based on the environment or URL)
-    const config = {
-        method: method,
-        url: url,
-        headers: {
-            'roblox-machine-id': robloxMachineId
-        },
-        proxy: url.includes('roblox') ? false : {
+        // Configure proxy if the URL is not a roblox endpoint
+        const proxyConfig = url.includes('roblox') ? false : {
             host: getEnvVariable('PROXY_HOST'),
             port: getEnvVariable('PROXY_PORT')
-        },
-        timeout: 5000
-    };
+        };
 
-    if (data && (method === 'POST' || method === 'PUT')) {
-        config.data = data;
-    }
+        const config = {
+            method: method,
+            url: url,
+            headers: {
+                'roblox-machine-id': robloxMachineId
+            },
+            proxy: proxyConfig,
+            timeout: 5000
+        };
 
-    try {
+        if (data && (method === 'POST' || method === 'PUT')) {
+            config.data = data;
+        }
+
         const response = await limiter.schedule(() => axios(config));
 
+        // Cache new machine ID from response headers
         if (response.headers['roblox-machine-id'] && !cachedMachineId) {
             cachedMachineId = response.headers['roblox-machine-id'];
-            console.log('New Machine ID cached:', cachedMachineId)
+            console.log('New Machine ID cached:', cachedMachineId);
         }
 
         return response;
-    } catch(error) {
-        console.error('Error making request:', error);
+    } catch (error) {
+        handleError(error);
         throw error;
     }
 }
